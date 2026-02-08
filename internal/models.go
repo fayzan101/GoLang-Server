@@ -8,7 +8,7 @@ import (
 type Product struct {
 	ID          uint      `gorm:"primaryKey" json:"id"`
 	Name        string    `gorm:"not null" json:"name"`
-	SKU         string    `gorm:"uniqueIndex;not null" json:"sku"`
+	SKU         string    `gorm:"unique;not null" json:"sku"`
 	Description string    `json:"description"`
 	Category    string    `json:"category"`
 	Price       float64   `gorm:"not null" json:"price"`
@@ -72,7 +72,7 @@ type Supplier struct {
 // PurchaseOrder represents orders placed to suppliers
 type PurchaseOrder struct {
 	ID         uint       `gorm:"primaryKey" json:"id"`
-	PONumber   string     `gorm:"uniqueIndex;not null" json:"po_number"`
+	PONumber   string     `gorm:"unique;not null" json:"po_number"`
 	SupplierID uint       `gorm:"not null;index" json:"supplier_id"`
 	Status     string     `gorm:"not null;default:'pending'" json:"status"` // pending, received, cancelled
 	TotalCost  float64    `json:"total_cost"`
@@ -97,7 +97,7 @@ type POItem struct {
 // Order represents sales orders
 type Order struct {
 	ID            uint        `gorm:"primaryKey" json:"id"`
-	OrderNumber   string      `gorm:"uniqueIndex;not null" json:"order_number"`
+	OrderNumber   string      `gorm:"unique;not null" json:"order_number"`
 	CustomerName  string      `gorm:"not null" json:"customer_name"`
 	CustomerEmail string      `json:"customer_email"`
 	Status        string      `gorm:"not null;default:'pending'" json:"status"` // pending, processing, shipped, delivered, cancelled

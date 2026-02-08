@@ -1,0 +1,50 @@
+# Git files
+.git
+.gitignore
+.gitattributes
+
+# IDE files
+.vscode
+.idea
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Test files and coverage
+*.test
+*.out
+coverage.out
+.coverage
+
+# Development files
+.env
+.env.local
+*.log
+
+# Build artifacts
+bin/
+dist/
+build/
+
+# Dependencies
+vendor/
+
+# Documentation
+docs/
+README.md
+
+# Test scripts
+scripts/test.sh
+
+# Postman collection
+IMS_Postman_Collection.json
+
+# Docker
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Temporary files
+tmp/
+temp/
