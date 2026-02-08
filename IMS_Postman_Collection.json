@@ -1,0 +1,648 @@
+{
+	"info": {
+		"_postman_id": "ims-api-collection-2026",
+		"name": "Inventory Management System API",
+		"description": "Complete collection of 25 REST APIs for IMS Backend built with Golang",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:3000",
+			"type": "string"
+		}
+	],
+	"item": [
+		{
+			"name": "Health Check",
+			"item": [
+				{
+					"name": "Health Check",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/health",
+							"host": ["{{base_url}}"],
+							"path": ["health"]
+						},
+						"description": "Check if the API server is running"
+					}
+				}
+			]
+		},
+		{
+			"name": "Product Management",
+			"item": [
+				{
+					"name": "Create Product",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Widget Pro\",\n  \"sku\": \"WGT-PRO-001\",\n  \"description\": \"Premium quality widget\",\n  \"category\": \"Electronics\",\n  \"price\": 299.99,\n  \"cost\": 150.00,\n  \"unit\": \"piece\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/products",
+							"host": ["{{base_url}}"],
+							"path": ["products"]
+						},
+						"description": "Create a new product in the catalog"
+					}
+				},
+				{
+					"name": "List Products",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/products",
+							"host": ["{{base_url}}"],
+							"path": ["products"]
+						},
+						"description": "Get all products"
+					}
+				},
+				{
+					"name": "List Products by Category",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/products?category=Electronics",
+							"host": ["{{base_url}}"],
+							"path": ["products"],
+							"query": [
+								{
+									"key": "category",
+									"value": "Electronics"
+								}
+							]
+						},
+						"description": "Filter products by category"
+					}
+				},
+				{
+					"name": "Get Product by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/products/1",
+							"host": ["{{base_url}}"],
+							"path": ["products", "1"]
+						},
+						"description": "Get a specific product by ID"
+					}
+				},
+				{
+					"name": "Update Product",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Widget Pro Updated\",\n  \"price\": 349.99,\n  \"description\": \"Updated premium widget\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/products/1",
+							"host": ["{{base_url}}"],
+							"path": ["products", "1"]
+						},
+						"description": "Update product details"
+					}
+				},
+				{
+					"name": "Delete Product",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/products/1",
+							"host": ["{{base_url}}"],
+							"path": ["products", "1"]
+						},
+						"description": "Delete a product from catalog"
+					}
+				},
+				{
+					"name": "Search Products",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/products/search?q=widget",
+							"host": ["{{base_url}}"],
+							"path": ["products", "search"],
+							"query": [
+								{
+									"key": "q",
+									"value": "widget"
+								}
+							]
+						},
+						"description": "Search products by keyword in name, SKU, or description"
+					}
+				}
+			]
+		},
+		{
+			"name": "Warehouse Management",
+			"item": [
+				{
+					"name": "Create Warehouse",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Main Warehouse\",\n  \"location\": \"New York, NY\",\n  \"capacity\": 10000,\n  \"manager_id\": 1\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/warehouses",
+							"host": ["{{base_url}}"],
+							"path": ["warehouses"]
+						},
+						"description": "Create a new warehouse"
+					}
+				},
+				{
+					"name": "List Warehouses",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/warehouses",
+							"host": ["{{base_url}}"],
+							"path": ["warehouses"]
+						},
+						"description": "Get all warehouses"
+					}
+				},
+				{
+					"name": "Get Warehouse by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/warehouses/1",
+							"host": ["{{base_url}}"],
+							"path": ["warehouses", "1"]
+						},
+						"description": "Get specific warehouse details"
+					}
+				}
+			]
+		},
+		{
+			"name": "Inventory / Stock",
+			"item": [
+				{
+					"name": "Get All Inventory",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/inventory",
+							"host": ["{{base_url}}"],
+							"path": ["inventory"]
+						},
+						"description": "Get current stock levels for all products across all warehouses"
+					}
+				},
+				{
+					"name": "Get Inventory by Warehouse",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/inventory?warehouse_id=1",
+							"host": ["{{base_url}}"],
+							"path": ["inventory"],
+							"query": [
+								{
+									"key": "warehouse_id",
+									"value": "1"
+								}
+							]
+						},
+						"description": "Filter inventory by specific warehouse"
+					}
+				},
+				{
+					"name": "Get Product Inventory",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/inventory/1",
+							"host": ["{{base_url}}"],
+							"path": ["inventory", "1"]
+						},
+						"description": "Get stock levels for a specific product across all warehouses"
+					}
+				},
+				{
+					"name": "Adjust Inventory",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"product_id\": 1,\n  \"warehouse_id\": 1,\n  \"quantity\": 100,\n  \"reason\": \"Initial stock addition\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/inventory/adjust",
+							"host": ["{{base_url}}"],
+							"path": ["inventory", "adjust"]
+						},
+						"description": "Manual stock adjustment (positive or negative)"
+					}
+				},
+				{
+					"name": "Get Low Stock Items",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/inventory/low-stock",
+							"host": ["{{base_url}}"],
+							"path": ["inventory", "low-stock"]
+						},
+						"description": "Get all items with stock at or below minimum threshold"
+					}
+				},
+				{
+					"name": "Get Stock Movements",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/inventory/movements",
+							"host": ["{{base_url}}"],
+							"path": ["inventory", "movements"]
+						},
+						"description": "View stock movement history (last 100 transactions)"
+					}
+				},
+				{
+					"name": "Get Stock Movements by Product",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/inventory/movements?product_id=1",
+							"host": ["{{base_url}}"],
+							"path": ["inventory", "movements"],
+							"query": [
+								{
+									"key": "product_id",
+									"value": "1"
+								}
+							]
+						},
+						"description": "Filter movements by specific product"
+					}
+				},
+				{
+					"name": "Get Stock Movements by Type",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/inventory/movements?type=IN",
+							"host": ["{{base_url}}"],
+							"path": ["inventory", "movements"],
+							"query": [
+								{
+									"key": "type",
+									"value": "IN",
+									"description": "IN, OUT, or ADJUST"
+								}
+							]
+						},
+						"description": "Filter movements by type (IN/OUT/ADJUST)"
+					}
+				}
+			]
+		},
+		{
+			"name": "Supplier Management",
+			"item": [
+				{
+					"name": "Create Supplier",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"TechParts Inc\",\n  \"contact_name\": \"John Doe\",\n  \"email\": \"john@techparts.com\",\n  \"phone\": \"+1-555-0123\",\n  \"address\": \"123 Supply Street, NY 10001\",\n  \"rating\": 4.5\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/suppliers",
+							"host": ["{{base_url}}"],
+							"path": ["suppliers"]
+						},
+						"description": "Add a new supplier"
+					}
+				},
+				{
+					"name": "List Suppliers",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/suppliers",
+							"host": ["{{base_url}}"],
+							"path": ["suppliers"]
+						},
+						"description": "Get all suppliers"
+					}
+				},
+				{
+					"name": "Update Supplier",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"contact_name\": \"Jane Smith\",\n  \"email\": \"jane@techparts.com\",\n  \"rating\": 4.8\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/suppliers/1",
+							"host": ["{{base_url}}"],
+							"path": ["suppliers", "1"]
+						},
+						"description": "Update supplier information"
+					}
+				}
+			]
+		},
+		{
+			"name": "Purchase Orders",
+			"item": [
+				{
+					"name": "Create Purchase Order",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"supplier_id\": 1,\n  \"items\": [\n    {\n      \"product_id\": 1,\n      \"quantity\": 500,\n      \"unit_price\": 15.00\n    },\n    {\n      \"product_id\": 2,\n      \"quantity\": 200,\n      \"unit_price\": 50.00\n    }\n  ]\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/purchase-orders",
+							"host": ["{{base_url}}"],
+							"path": ["purchase-orders"]
+						},
+						"description": "Create a new purchase order to supplier"
+					}
+				},
+				{
+					"name": "List Purchase Orders",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/purchase-orders",
+							"host": ["{{base_url}}"],
+							"path": ["purchase-orders"]
+						},
+						"description": "Get all purchase orders"
+					}
+				},
+				{
+					"name": "List Purchase Orders by Status",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/purchase-orders?status=pending",
+							"host": ["{{base_url}}"],
+							"path": ["purchase-orders"],
+							"query": [
+								{
+									"key": "status",
+									"value": "pending",
+									"description": "pending, received, cancelled"
+								}
+							]
+						},
+						"description": "Filter purchase orders by status"
+					}
+				},
+				{
+					"name": "Receive Purchase Order",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"warehouse_id\": 1\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/purchase-orders/1/receive",
+							"host": ["{{base_url}}"],
+							"path": ["purchase-orders", "1", "receive"]
+						},
+						"description": "Mark PO as received and add stock to warehouse"
+					}
+				}
+			]
+		},
+		{
+			"name": "Sales Orders",
+			"item": [
+				{
+					"name": "Create Order",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"customer_name\": \"ABC Corporation\",\n  \"customer_email\": \"orders@abc.com\",\n  \"items\": [\n    {\n      \"product_id\": 1,\n      \"warehouse_id\": 1,\n      \"quantity\": 10\n    },\n    {\n      \"product_id\": 2,\n      \"warehouse_id\": 1,\n      \"quantity\": 5\n    }\n  ]\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/orders",
+							"host": ["{{base_url}}"],
+							"path": ["orders"]
+						},
+						"description": "Create a new sales order (reduces inventory automatically)"
+					}
+				},
+				{
+					"name": "List Orders",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/orders",
+							"host": ["{{base_url}}"],
+							"path": ["orders"]
+						},
+						"description": "Get all sales orders"
+					}
+				},
+				{
+					"name": "List Orders by Status",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/orders?status=pending",
+							"host": ["{{base_url}}"],
+							"path": ["orders"],
+							"query": [
+								{
+									"key": "status",
+									"value": "pending",
+									"description": "pending, processing, shipped, delivered, cancelled"
+								}
+							]
+						},
+						"description": "Filter orders by status"
+					}
+				},
+				{
+					"name": "Update Order Status",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"status\": \"shipped\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/orders/1/status",
+							"host": ["{{base_url}}"],
+							"path": ["orders", "1", "status"]
+						},
+						"description": "Update order status (pending → processing → shipped → delivered)"
+					}
+				}
+			]
+		},
+		{
+			"name": "Reports & Audit",
+			"item": [
+				{
+					"name": "Stock Summary Report",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/reports/stock-summary",
+							"host": ["{{base_url}}"],
+							"path": ["reports", "stock-summary"]
+						},
+						"description": "Get complete stock summary with values across all warehouses"
+					}
+				},
+				{
+					"name": "Audit Logs",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/audit-logs",
+							"host": ["{{base_url}}"],
+							"path": ["audit-logs"]
+						},
+						"description": "Get audit trail (last 100 actions)"
+					}
+				},
+				{
+					"name": "Audit Logs by Entity",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/audit-logs?entity=Product",
+							"host": ["{{base_url}}"],
+							"path": ["audit-logs"],
+							"query": [
+								{
+									"key": "entity",
+									"value": "Product",
+									"description": "Product, Order, Inventory, etc."
+								}
+							]
+						},
+						"description": "Filter audit logs by entity type"
+					}
+				},
+				{
+					"name": "Audit Logs by Action",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/audit-logs?action=CREATE",
+							"host": ["{{base_url}}"],
+							"path": ["audit-logs"],
+							"query": [
+								{
+									"key": "action",
+									"value": "CREATE",
+									"description": "CREATE, UPDATE, DELETE, etc."
+								}
+							]
+						},
+						"description": "Filter audit logs by action type"
+					}
+				}
+			]
+		}
+	]
+}
