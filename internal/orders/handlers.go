@@ -10,7 +10,6 @@ import (
 	"time"
 )
 
-// CreatePurchaseOrder - POST /purchase-orders
 func CreatePurchaseOrder(w http.ResponseWriter, r *http.Request) {
 	var req struct {
 		SupplierID uint `json:"supplier_id"`
@@ -25,11 +24,7 @@ func CreatePurchaseOrder(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid request payload", http.StatusBadRequest)
 		return
 	}
-
-	// Generate PO number
 	poNumber := fmt.Sprintf("PO-%d", time.Now().Unix())
-
-	// Calculate total
 	var total float64
 	for _, item := range req.Items {
 		total += item.UnitPrice * float64(item.Quantity)
@@ -47,8 +42,6 @@ func CreatePurchaseOrder(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Failed to create purchase order", http.StatusInternalServerError)
 		return
 	}
-
-	// Create PO items
 	for _, item := range req.Items {
 		poItem := internal.POItem{
 			POID:      po.ID,
@@ -68,13 +61,9 @@ func CreatePurchaseOrder(w http.ResponseWriter, r *http.Request) {
 		"data":   po,
 	})
 }
-
-// ListPurchaseOrders - GET /purchase-orders
 func ListPurchaseOrders(w http.ResponseWriter, r *http.Request) {
 	var pos []internal.PurchaseOrder
 	query := internal.DB.Preload("Supplier").Preload("Items.Product")
-
-	// Filter by status
 	status := r.URL.Query().Get("status")
 	if status != "" {
 		query = query.Where("status = ?", status)
@@ -91,8 +80,6 @@ func ListPurchaseOrders(w http.ResponseWriter, r *http.Request) {
 		"data":   pos,
 	})
 }
-
-// ReceivePurchaseOrder - PUT /purchase-orders/{id}/receive
 func ReceivePurchaseOrder(w http.ResponseWriter, r *http.Request) {
 	id := extractID(r.URL.Path, "/purchase-orders/")
 	if id == 0 {
@@ -113,15 +100,12 @@ func ReceivePurchaseOrder(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Purchase order not found", http.StatusNotFound)
 		return
 	}
-
-	// Update inventory for each item
 	for _, item := range po.Items {
 		var inv internal.Inventory
 		err := internal.DB.Where("product_id = ? AND warehouse_id = ?",
 			item.ProductID, req.WarehouseID).First(&inv).Error
 
 		if err != nil {
-			// Create new inventory
 			inv = internal.Inventory{
 				ProductID:   item.ProductID,
 				WarehouseID: req.WarehouseID,
@@ -132,8 +116,6 @@ func ReceivePurchaseOrder(w http.ResponseWriter, r *http.Request) {
 			inv.Quantity += item.Quantity
 			internal.DB.Save(&inv)
 		}
-
-		// Log stock movement
 		movement := internal.StockMovement{
 			ProductID:   item.ProductID,
 			WarehouseID: req.WarehouseID,
@@ -146,8 +128,6 @@ func ReceivePurchaseOrder(w http.ResponseWriter, r *http.Request) {
 		}
 		internal.DB.Create(&movement)
 	}
-
-	// Update PO status
 	now := time.Now()
 	po.Status = "received"
 	po.ReceivedAt = &now
@@ -162,8 +142,6 @@ func ReceivePurchaseOrder(w http.ResponseWriter, r *http.Request) {
 		"data":    po,
 	})
 }
-
-// CreateOrder - POST /orders
 func CreateOrder(w http.ResponseWriter, r *http.Request) {
 	var req struct {
 		CustomerName  string `json:"customer_name"`
@@ -179,11 +157,7 @@ func CreateOrder(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid request payload", http.StatusBadRequest)
 		return
 	}
-
-	// Generate order number
 	orderNumber := fmt.Sprintf("ORD-%d", time.Now().Unix())
-
-	// Calculate total and check inventory
 	var total float64
 	for _, item := range req.Items {
 		var product internal.Product
@@ -191,8 +165,6 @@ func CreateOrder(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Product not found", http.StatusNotFound)
 			return
 		}
-
-		// Check inventory
 		var inv internal.Inventory
 		if err := internal.DB.Where("product_id = ? AND warehouse_id = ?",
 			item.ProductID, item.WarehouseID).First(&inv).Error; err != nil {
@@ -221,8 +193,6 @@ func CreateOrder(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Failed to create order", http.StatusInternalServerError)
 		return
 	}
-
-	// Create order items and update inventory
 	for _, item := range req.Items {
 		var product internal.Product
 		internal.DB.First(&product, item.ProductID)
@@ -235,15 +205,11 @@ func CreateOrder(w http.ResponseWriter, r *http.Request) {
 			UnitPrice:   product.Price,
 		}
 		internal.DB.Create(&orderItem)
-
-		// Reduce inventory
 		var inv internal.Inventory
 		internal.DB.Where("product_id = ? AND warehouse_id = ?",
 			item.ProductID, item.WarehouseID).First(&inv)
 		inv.Quantity -= item.Quantity
 		internal.DB.Save(&inv)
-
-		// Log stock movement
 		movement := internal.StockMovement{
 			ProductID:   item.ProductID,
 			WarehouseID: item.WarehouseID,
@@ -266,13 +232,9 @@ func CreateOrder(w http.ResponseWriter, r *http.Request) {
 		"data":   order,
 	})
 }
-
-// ListOrders - GET /orders
 func ListOrders(w http.ResponseWriter, r *http.Request) {
 	var orders []internal.Order
 	query := internal.DB.Preload("Items.Product")
-
-	// Filter by status
 	status := r.URL.Query().Get("status")
 	if status != "" {
 		query = query.Where("status = ?", status)
@@ -289,8 +251,6 @@ func ListOrders(w http.ResponseWriter, r *http.Request) {
 		"data":   orders,
 	})
 }
-
-// UpdateOrderStatus - PUT /orders/{id}/status
 func UpdateOrderStatus(w http.ResponseWriter, r *http.Request) {
 	id := extractID(r.URL.Path, "/orders/")
 	if id == 0 {
@@ -315,9 +275,10 @@ func UpdateOrderStatus(w http.ResponseWriter, r *http.Request) {
 	order.Status = req.Status
 	now := time.Now()
 
-	if req.Status == "shipped" {
+	switch req.Status {
+	case "shipped":
 		order.ShippedAt = &now
-	} else if req.Status == "delivered" {
+	case "delivered":
 		order.DeliveredAt = &now
 	}
 
@@ -334,7 +295,6 @@ func UpdateOrderStatus(w http.ResponseWriter, r *http.Request) {
 
 func extractID(path, prefix string) int {
 	idStr := strings.TrimPrefix(path, prefix)
-	// Remove any trailing path segments
 	parts := strings.Split(idStr, "/")
 	id, _ := strconv.Atoi(parts[0])
 	return id

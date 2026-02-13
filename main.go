@@ -14,6 +14,7 @@ import (
 	"myapp/internal/reports"
 	"myapp/internal/suppliers"
 	"myapp/internal/warehouses"
+	"myapp/internal/websocket"
 	"net/http"
 	"os"
 	"strings"
@@ -22,7 +23,6 @@ import (
 )
 
 func main() {
-	// Load .env file
 	if err := godotenv.Load(); err != nil {
 		log.Println("No .env file found, using environment variables.")
 	}
@@ -36,39 +36,35 @@ func main() {
 	connStr := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, name)
 	internal.InitDB(connStr)
 
-	// Product Management APIs (6)
+	// Initialize WebSocket hub for real-time updates
+	websocket.InitHub()
+	log.Println("🔌 WebSocket hub initialized for real-time inventory updates")
+
 	http.HandleFunc("/products", handleProducts)
 	http.HandleFunc("/products/", handleProductsWithID)
 	http.HandleFunc("/products/search", products.SearchProducts)
-
-	// Warehouse Management APIs (3)
 	http.HandleFunc("/warehouses", handleWarehouses)
 	http.HandleFunc("/warehouses/", handleWarehousesWithID)
-
-	// Inventory APIs (5)
 	http.HandleFunc("/inventory", handleInventory)
 	http.HandleFunc("/inventory/", handleInventoryWithID)
 	http.HandleFunc("/inventory/adjust", inventory.AdjustInventory)
 	http.HandleFunc("/inventory/low-stock", inventory.GetLowStock)
 	http.HandleFunc("/inventory/movements", inventory.GetStockMovements)
 
-	// Supplier APIs (3)
+	// WebSocket endpoints for real-time updates
+	http.HandleFunc("/ws/inventory", websocket.HandleWebSocket)
+	http.HandleFunc("/ws/warehouses", websocket.HandleWebSocket)
+	http.HandleFunc("/ws/products", websocket.HandleWebSocket)
+	http.HandleFunc("/ws/suppliers", websocket.HandleWebSocket)
+
 	http.HandleFunc("/suppliers", handleSuppliers)
 	http.HandleFunc("/suppliers/", handleSuppliersWithID)
-
-	// Purchase Order APIs (3)
 	http.HandleFunc("/purchase-orders", handlePurchaseOrders)
 	http.HandleFunc("/purchase-orders/", handlePurchaseOrdersWithID)
-
-	// Sales Order APIs (3)
 	http.HandleFunc("/orders", handleOrders)
 	http.HandleFunc("/orders/", handleOrdersWithID)
-
-	// Reports & Audit APIs (2)
 	http.HandleFunc("/reports/stock-summary", reports.GetStockSummary)
 	http.HandleFunc("/audit-logs", reports.GetAuditLogs)
-
-	// Health check
 	http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
@@ -80,12 +76,15 @@ func main() {
 
 	log.Println("🚀 Inventory Management System API started on :3000")
 	log.Println("📦 Total APIs: 25")
+	log.Println("🔌 WebSocket endpoints:")
+	log.Println("   - ws://localhost:3000/ws/inventory")
+	log.Println("   - ws://localhost:3000/ws/warehouses")
+	log.Println("   - ws://localhost:3000/ws/products")
+	log.Println("   - ws://localhost:3000/ws/suppliers")
 	if err := http.ListenAndServe(":3000", nil); err != nil {
 		log.Fatalf("Server failed: %v", err)
 	}
 }
-
-// Route handlers with method routing
 
 func handleProducts(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
@@ -127,9 +126,14 @@ func handleWarehouses(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleWarehousesWithID(w http.ResponseWriter, r *http.Request) {
-	if r.Method == http.MethodGet {
+	switch r.Method {
+	case http.MethodGet:
 		warehouses.GetWarehouse(w, r)
-	} else {
+	case http.MethodPut:
+		warehouses.UpdateWarehouse(w, r)
+	case http.MethodDelete:
+		warehouses.DeleteWarehouse(w, r)
+	default:
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 	}
 }
