@@ -17,8 +17,6 @@ func InitDB(connStr string) {
 		log.Fatalf("Failed to connect to database: %v", err)
 	}
 	log.Println("Connected to PostgreSQL database with GORM.")
-
-	// Auto-migrate all IMS models
 	if err := DB.AutoMigrate(
 		&Product{},
 		&Warehouse{},
@@ -35,8 +33,6 @@ func InitDB(connStr string) {
 	}
 	log.Println("Database migration completed successfully.")
 }
-
-// LogAudit creates an audit log entry
 func LogAudit(action, entity string, entityID uint, userID, details string) {
 	log := AuditLog{
 		Action:    action,

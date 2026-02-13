@@ -6,7 +6,6 @@ import (
 	"net/http"
 )
 
-// GetStockSummary - GET /reports/stock-summary
 func GetStockSummary(w http.ResponseWriter, r *http.Request) {
 	var results []struct {
 		WarehouseName string  `json:"warehouse_name"`
@@ -33,8 +32,6 @@ func GetStockSummary(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Failed to generate stock summary", http.StatusInternalServerError)
 		return
 	}
-
-	// Calculate totals
 	var totalValue float64
 	var totalItems int
 	for _, r := range results {
@@ -52,19 +49,13 @@ func GetStockSummary(w http.ResponseWriter, r *http.Request) {
 		},
 	})
 }
-
-// GetAuditLogs - GET /audit-logs
 func GetAuditLogs(w http.ResponseWriter, r *http.Request) {
 	var logs []internal.AuditLog
 	query := internal.DB.Order("created_at DESC").Limit(100)
-
-	// Filter by entity
 	entity := r.URL.Query().Get("entity")
 	if entity != "" {
 		query = query.Where("entity = ?", entity)
 	}
-
-	// Filter by action
 	action := r.URL.Query().Get("action")
 	if action != "" {
 		query = query.Where("action = ?", action)

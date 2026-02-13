@@ -3,12 +3,12 @@ package products
 import (
 	"encoding/json"
 	"myapp/internal"
+	"myapp/internal/websocket"
 	"net/http"
 	"strconv"
 	"strings"
 )
 
-// CreateProduct - POST /products
 func CreateProduct(w http.ResponseWriter, r *http.Request) {
 	var product internal.Product
 	if err := json.NewDecoder(r.Body).Decode(&product); err != nil {
@@ -20,9 +20,12 @@ func CreateProduct(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Failed to create product", http.StatusInternalServerError)
 		return
 	}
-
-	// Audit log
 	internal.LogAudit("CREATE", "Product", product.ID, "system", "Created new product")
+
+	// Broadcast product creation via WebSocket
+	if hub := websocket.GetHub(); hub != nil {
+		hub.BroadcastProductUpdate(product.ID, product.Name, product.SKU, product.Category, product.Price, "created")
+	}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
@@ -31,13 +34,9 @@ func CreateProduct(w http.ResponseWriter, r *http.Request) {
 		"data":   product,
 	})
 }
-
-// ListProducts - GET /products
 func ListProducts(w http.ResponseWriter, r *http.Request) {
 	var products []internal.Product
 	query := internal.DB
-
-	// Filter by category if provided
 	category := r.URL.Query().Get("category")
 	if category != "" {
 		query = query.Where("category = ?", category)
@@ -54,8 +53,6 @@ func ListProducts(w http.ResponseWriter, r *http.Request) {
 		"data":   products,
 	})
 }
-
-// GetProduct - GET /products/{id}
 func GetProduct(w http.ResponseWriter, r *http.Request) {
 	id := extractID(r.URL.Path, "/products/")
 	if id == 0 {
@@ -75,8 +72,6 @@ func GetProduct(w http.ResponseWriter, r *http.Request) {
 		"data":   product,
 	})
 }
-
-// UpdateProduct - PUT /products/{id}
 func UpdateProduct(w http.ResponseWriter, r *http.Request) {
 	id := extractID(r.URL.Path, "/products/")
 	if id == 0 {
@@ -96,6 +91,9 @@ func UpdateProduct(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Store old price for price change alerts
+	oldPrice := product.Price
+
 	if err := internal.DB.Model(&product).Updates(updates).Error; err != nil {
 		http.Error(w, "Failed to update product", http.StatusInternalServerError)
 		return
@@ -103,14 +101,25 @@ func UpdateProduct(w http.ResponseWriter, r *http.Request) {
 
 	internal.LogAudit("UPDATE", "Product", product.ID, "system", "Updated product")
 
+	// Broadcast product update via WebSocket
+	if hub := websocket.GetHub(); hub != nil {
+		hub.BroadcastProductUpdate(product.ID, product.Name, product.SKU, product.Category, product.Price, "updated")
+		
+		// Send price alert if price changed by more than 10%
+		if oldPrice > 0 && product.Price > 0 {
+			changePercent := ((product.Price - oldPrice) / oldPrice) * 100
+			if changePercent > 10 || changePercent < -10 {
+				hub.BroadcastProductPriceAlert(product.ID, product.Name, oldPrice, product.Price, changePercent)
+			}
+		}
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"status": "success",
 		"data":   product,
 	})
 }
-
-// DeleteProduct - DELETE /products/{id}
 func DeleteProduct(w http.ResponseWriter, r *http.Request) {
 	id := extractID(r.URL.Path, "/products/")
 	if id == 0 {
@@ -118,12 +127,30 @@ func DeleteProduct(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := internal.DB.Delete(&internal.Product{}, id).Error; err != nil {
+	// Fetch product details before deletion for WebSocket broadcast
+	var product internal.Product
+	if err := internal.DB.First(&product, id).Error; err != nil {
+		http.Error(w, "Product not found", http.StatusNotFound)
+		return
+	}
+
+	productName := product.Name
+	productSKU := product.SKU
+	productCategory := product.Category
+	productPrice := product.Price
+	productID := product.ID
+
+	if err := internal.DB.Delete(&product).Error; err != nil {
 		http.Error(w, "Failed to delete product", http.StatusInternalServerError)
 		return
 	}
 
 	internal.LogAudit("DELETE", "Product", uint(id), "system", "Deleted product")
+
+	// Broadcast product deletion via WebSocket
+	if hub := websocket.GetHub(); hub != nil {
+		hub.BroadcastProductUpdate(productID, productName, productSKU, productCategory, productPrice, "deleted")
+	}
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]interface{}{
@@ -131,8 +158,6 @@ func DeleteProduct(w http.ResponseWriter, r *http.Request) {
 		"message": "Product deleted successfully",
 	})
 }
-
-// SearchProducts - GET /products/search?q=keyword
 func SearchProducts(w http.ResponseWriter, r *http.Request) {
 	keyword := r.URL.Query().Get("q")
 	if keyword == "" {
@@ -154,8 +179,6 @@ func SearchProducts(w http.ResponseWriter, r *http.Request) {
 		"data":   products,
 	})
 }
-
-// Helper function to extract ID from URL
 func extractID(path, prefix string) int {
 	idStr := strings.TrimPrefix(path, prefix)
 	if idx := strings.Index(idStr, "/"); idx != -1 {

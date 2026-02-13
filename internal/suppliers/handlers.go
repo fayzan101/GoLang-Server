@@ -3,12 +3,12 @@ package suppliers
 import (
 	"encoding/json"
 	"myapp/internal"
+	"myapp/internal/websocket"
 	"net/http"
 	"strconv"
 	"strings"
 )
 
-// CreateSupplier - POST /suppliers
 func CreateSupplier(w http.ResponseWriter, r *http.Request) {
 	var supplier internal.Supplier
 	if err := json.NewDecoder(r.Body).Decode(&supplier); err != nil {
@@ -23,6 +23,11 @@ func CreateSupplier(w http.ResponseWriter, r *http.Request) {
 
 	internal.LogAudit("CREATE", "Supplier", supplier.ID, "system", "Created new supplier")
 
+	// Broadcast supplier creation via WebSocket
+	if hub := websocket.GetHub(); hub != nil {
+		hub.BroadcastSupplierUpdate(supplier.ID, supplier.Name, supplier.Email, supplier.Phone, supplier.Address, "created")
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(map[string]interface{}{
@@ -30,8 +35,6 @@ func CreateSupplier(w http.ResponseWriter, r *http.Request) {
 		"data":   supplier,
 	})
 }
-
-// ListSuppliers - GET /suppliers
 func ListSuppliers(w http.ResponseWriter, r *http.Request) {
 	var suppliers []internal.Supplier
 	if err := internal.DB.Find(&suppliers).Error; err != nil {
@@ -45,8 +48,6 @@ func ListSuppliers(w http.ResponseWriter, r *http.Request) {
 		"data":   suppliers,
 	})
 }
-
-// UpdateSupplier - PUT /suppliers/{id}
 func UpdateSupplier(w http.ResponseWriter, r *http.Request) {
 	id := extractID(r.URL.Path, "/suppliers/")
 	if id == 0 {
@@ -72,6 +73,11 @@ func UpdateSupplier(w http.ResponseWriter, r *http.Request) {
 	}
 
 	internal.LogAudit("UPDATE", "Supplier", supplier.ID, "system", "Updated supplier")
+
+	// Broadcast supplier update via WebSocket
+	if hub := websocket.GetHub(); hub != nil {
+		hub.BroadcastSupplierUpdate(supplier.ID, supplier.Name, supplier.Email, supplier.Phone, supplier.Address, "updated")
+	}
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]interface{}{

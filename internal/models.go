@@ -4,7 +4,6 @@ import (
 	"time"
 )
 
-// Product represents a product in the catalog
 type Product struct {
 	ID          uint      `gorm:"primaryKey" json:"id"`
 	Name        string    `gorm:"not null" json:"name"`
@@ -17,8 +16,6 @@ type Product struct {
 	CreatedAt   time.Time `json:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at"`
 }
-
-// Warehouse represents a storage location
 type Warehouse struct {
 	ID        uint      `gorm:"primaryKey" json:"id"`
 	Name      string    `gorm:"not null" json:"name"`
@@ -28,8 +25,6 @@ type Warehouse struct {
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 }
-
-// Inventory represents current stock levels
 type Inventory struct {
 	ID          uint      `gorm:"primaryKey" json:"id"`
 	ProductID   uint      `gorm:"not null;index" json:"product_id"`
@@ -41,8 +36,6 @@ type Inventory struct {
 	Product     Product   `gorm:"foreignKey:ProductID" json:"product,omitempty"`
 	Warehouse   Warehouse `gorm:"foreignKey:WarehouseID" json:"warehouse,omitempty"`
 }
-
-// StockMovement represents stock in/out transactions
 type StockMovement struct {
 	ID          uint      `gorm:"primaryKey" json:"id"`
 	ProductID   uint      `gorm:"not null;index" json:"product_id"`
@@ -55,8 +48,6 @@ type StockMovement struct {
 	CreatedAt   time.Time `json:"created_at"`
 	Product     Product   `gorm:"foreignKey:ProductID" json:"product,omitempty"`
 }
-
-// Supplier represents a supplier
 type Supplier struct {
 	ID          uint      `gorm:"primaryKey" json:"id"`
 	Name        string    `gorm:"not null" json:"name"`
@@ -68,8 +59,6 @@ type Supplier struct {
 	CreatedAt   time.Time `json:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at"`
 }
-
-// PurchaseOrder represents orders placed to suppliers
 type PurchaseOrder struct {
 	ID         uint       `gorm:"primaryKey" json:"id"`
 	PONumber   string     `gorm:"unique;not null" json:"po_number"`
@@ -83,8 +72,6 @@ type PurchaseOrder struct {
 	Supplier   Supplier   `gorm:"foreignKey:SupplierID" json:"supplier,omitempty"`
 	Items      []POItem   `gorm:"foreignKey:POID" json:"items,omitempty"`
 }
-
-// POItem represents items in a purchase order
 type POItem struct {
 	ID        uint    `gorm:"primaryKey" json:"id"`
 	POID      uint    `gorm:"not null;index" json:"po_id"`
@@ -93,8 +80,6 @@ type POItem struct {
 	UnitPrice float64 `json:"unit_price"`
 	Product   Product `gorm:"foreignKey:ProductID" json:"product,omitempty"`
 }
-
-// Order represents sales orders
 type Order struct {
 	ID            uint        `gorm:"primaryKey" json:"id"`
 	OrderNumber   string      `gorm:"unique;not null" json:"order_number"`
@@ -109,8 +94,6 @@ type Order struct {
 	UpdatedAt     time.Time   `json:"updated_at"`
 	Items         []OrderItem `gorm:"foreignKey:OrderID" json:"items,omitempty"`
 }
-
-// OrderItem represents items in a sales order
 type OrderItem struct {
 	ID          uint    `gorm:"primaryKey" json:"id"`
 	OrderID     uint    `gorm:"not null;index" json:"order_id"`
@@ -120,8 +103,6 @@ type OrderItem struct {
 	UnitPrice   float64 `json:"unit_price"`
 	Product     Product `gorm:"foreignKey:ProductID" json:"product,omitempty"`
 }
-
-// AuditLog represents audit trail
 type AuditLog struct {
 	ID        uint      `gorm:"primaryKey" json:"id"`
 	Action    string    `gorm:"not null" json:"action"`

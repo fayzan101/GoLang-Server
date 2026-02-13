@@ -50,7 +50,7 @@ function StartServices {
     if ($LASTEXITCODE -eq 0) {
         Write-Host "`nServices started successfully!" -ForegroundColor Green
         Write-Host "Application running at: http://localhost:3000" -ForegroundColor Green
-        Write-Host "Database: postgres://postgres@localhost:5432/ims" -ForegroundColor Green
+        Write-Host "Database: postgres://postgres@localhost:5433/ims" -ForegroundColor Green
     } else {
         Write-Host "Failed to start services!" -ForegroundColor Red
         exit 1

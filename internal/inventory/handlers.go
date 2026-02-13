@@ -3,18 +3,16 @@ package inventory
 import (
 	"encoding/json"
 	"myapp/internal"
+	"myapp/internal/websocket"
 	"net/http"
 	"strconv"
 	"strings"
 	"time"
 )
 
-// GetInventory - GET /inventory
 func GetInventory(w http.ResponseWriter, r *http.Request) {
 	var inventory []internal.Inventory
 	query := internal.DB.Preload("Product").Preload("Warehouse")
-
-	// Filter by warehouse
 	warehouseID := r.URL.Query().Get("warehouse_id")
 	if warehouseID != "" {
 		query = query.Where("warehouse_id = ?", warehouseID)
@@ -31,8 +29,6 @@ func GetInventory(w http.ResponseWriter, r *http.Request) {
 		"data":   inventory,
 	})
 }
-
-// GetProductInventory - GET /inventory/{productId}
 func GetProductInventory(w http.ResponseWriter, r *http.Request) {
 	productID := extractID(r.URL.Path, "/inventory/")
 	if productID == 0 {
@@ -52,8 +48,6 @@ func GetProductInventory(w http.ResponseWriter, r *http.Request) {
 		"data":   inventory,
 	})
 }
-
-// AdjustInventory - POST /inventory/adjust
 func AdjustInventory(w http.ResponseWriter, r *http.Request) {
 	var req struct {
 		ProductID   uint   `json:"product_id"`
@@ -70,21 +64,22 @@ func AdjustInventory(w http.ResponseWriter, r *http.Request) {
 	var inv internal.Inventory
 	err := internal.DB.Where("product_id = ? AND warehouse_id = ?", req.ProductID, req.WarehouseID).First(&inv).Error
 
+	isNew := err != nil
+	action := "updated"
+
 	if err != nil {
-		// Create new inventory record
 		inv = internal.Inventory{
 			ProductID:   req.ProductID,
 			WarehouseID: req.WarehouseID,
 			Quantity:    req.Quantity,
 		}
 		internal.DB.Create(&inv)
+		action = "created"
 	} else {
-		// Update existing
 		inv.Quantity += req.Quantity
 		internal.DB.Save(&inv)
+		action = "adjusted"
 	}
-
-	// Log stock movement
 	movement := internal.StockMovement{
 		ProductID:   req.ProductID,
 		WarehouseID: req.WarehouseID,
@@ -97,6 +92,15 @@ func AdjustInventory(w http.ResponseWriter, r *http.Request) {
 	internal.DB.Create(&movement)
 
 	internal.LogAudit("ADJUST", "Inventory", inv.ID, "system", req.Reason)
+	hub := websocket.GetHub()
+	if hub != nil {
+		hub.BroadcastInventoryUpdate(inv.ID, inv.ProductID, inv.WarehouseID, inv.Quantity, action)
+		if !isNew && inv.Quantity <= inv.MinStock {
+			var product internal.Product
+			internal.DB.First(&product, inv.ProductID)
+			hub.BroadcastLowStockAlert(inv.ProductID, inv.WarehouseID, inv.Quantity, inv.MinStock, product.Name)
+		}
+	}
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]interface{}{
@@ -104,8 +108,6 @@ func AdjustInventory(w http.ResponseWriter, r *http.Request) {
 		"data":   inv,
 	})
 }
-
-// GetLowStock - GET /inventory/low-stock
 func GetLowStock(w http.ResponseWriter, r *http.Request) {
 	var inventory []internal.Inventory
 	if err := internal.DB.Preload("Product").Preload("Warehouse").
@@ -121,19 +123,13 @@ func GetLowStock(w http.ResponseWriter, r *http.Request) {
 		"count":  len(inventory),
 	})
 }
-
-// GetStockMovements - GET /inventory/movements
 func GetStockMovements(w http.ResponseWriter, r *http.Request) {
 	var movements []internal.StockMovement
 	query := internal.DB.Preload("Product").Order("created_at DESC").Limit(100)
-
-	// Filter by product
 	productID := r.URL.Query().Get("product_id")
 	if productID != "" {
 		query = query.Where("product_id = ?", productID)
 	}
-
-	// Filter by type
 	movementType := r.URL.Query().Get("type")
 	if movementType != "" {
 		query = query.Where("type = ?", movementType)
